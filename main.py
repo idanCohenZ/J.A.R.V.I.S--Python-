@@ -1,57 +1,21 @@
-from datetime import datetime
 import speech_recognition as sr
 import pyttsx3
 import pywhatkit
-import pyfirmata
-from pymata4 import pymata4
-import time
-from time import sleep
-from pyfirmata import SERVO
+import datetime
+import wikipedia
+import pyjokes
 
-board = pymata4.Pymata4() # connect an arduino and find port
-echoPin = 11
-triggerPin = 12
+
+
+# A note for the devs out there :
+# You have to install in your environment the three imports above
+# plus the pyaudio which is not available for python 3.6 and above
+# to save yourself time- download python 3.6 exactly, know the root, add that version as interpreter
+# and only then start installing the packages. (there is a way to install it on newer versions but believe
+# me - save yourself the headaches)
+
 engine = pyttsx3.init()
 listener = sr.Recognizer()
-
-# servo simple code
-# port = ''
-# servo_pin = 7
-# board.digital[servo_pin].mode = SERVO
-#
-#
-# def rotateServo(pin, angle):
-#     board.digital[servo_pin].write(angle)
-#     sleep(0.015)
-#
-#
-# for i in range(0, 180):
-#     rotateServo(servo_pin, i)
-#     # in case you want it to return to normal position
-# for i in range(180, 1, -1):
-#     rotateServo(servo_pin, i)
-
-#
-# internet version that looks good - weather temperature:
-# from pyfirmata import ArduinoMega
-# from pyfirmata.util import Iterator
-# import time
-#
-# board = ArduinoMega('/dev/ttyUSB0') # connect to arduino usb port
-#
-# iterator = Iterator(board) # start reading analog input
-# iterator.start()
-#
-# pinTemp = board.get_pin('a:0:i') # set valid in analog pin
-#
-# while True:
-#     voltage = pinTemp.read() # read voltage input
-#     if voltage is not None: # first read after startup is somtimes None
-#         temp = 5.0*100*voltage # convert voltage to temperature
-#         print "{0} Celsius".format(temp)
-#         time.sleep(1) # 1 second waiting
-# ###
-
 
 
 # engine.say("Good morning sir.")
@@ -69,67 +33,51 @@ def talk(text):
 
 def take_command():
     try:
+
         with sr.Microphone() as source:
             print('listening...')
             voice = listener.listen(source)
             command = listener.recognize_google(voice)
-            if 'Alexa' in command:
-                command = command.lower()
-                command = command.replace('alexa', '')
-            print(command)
+            command = command.lower()
 
+            if 'Alexa' in command:
+                command = command.replace('alexa', '')
+                print(command)
     except:
         pass
     return command
 
 
-# internet version that looks good - distance with ultra - sonic:
-def check_distance():
-    board.set_pin_mode_sonar(triggerPin, echoPin, the_callback)
-    print("entered check distance")
-    while True:
-        try:
-            time.sleep(1)
-            board.sonar_read(triggerPin)
-        except Exception:
-            print("error")
-
-
-def the_callback(data):
-    print("Distance ", data[2])
-
-
-
-
-
-
-
-
 def run_alexa():
-    command = take_command()
-    print(command)
-    if 'play' in command:
-        song = command.replace('play', '')
+    command_text = take_command()
+    print(command_text)
+    if 'play' in command_text:
+        song = command_text.replace('play', '')
         talk('playing' + song)
         pywhatkit.playonyt(song)
+    elif 'time' in command_text:
+        # Using the datetime object and applying a method to turn it to string
+        # There is %H:M and I means the duel meaning, the P means am/pm
+        time = datetime.datetime.now().strftime('%I:%M:%P')
+        talk("the current time is: " + time)
+    elif 'what the heck is' in command_text:
+        search_item = command_text.replace('what the heck is', '')
+        info = wikipedia.summary(search_item, 1)
+        print(info)
+        talk(info)
+    elif 'are you single' in command_text:
+        talk('Sorry, I am in a relationship with wifi')
+    elif 'joke' in command_text:
+        joke = pyjokes.get_joke()
+        print(joke)
+        talk(joke)
+    elif 'goodbye' in command_text:
+        talk('goodbye')
+    else:
+        talk('Sorry, could you please repeat your wish?')
 
-    if 'distance' in command:
-        check_distance()
 
-
-run_alexa()
-
-
-
-
-
-# Py + Arduino trial
-# my try at translating
-# trigPin = 8
-# echoPin = 9
-# #defining variables
-# near=6; # red -as in proximity alert
-# far=7;  # green- as in all good
-# board.digital[echoPin].mode = pyfirmata.INPUT
-#
-# duration = pulseIn(echoPin, HIGH);
+# In case you want to make her keep listening:
+while True:
+    run_alexa()
+# run_alexa()
